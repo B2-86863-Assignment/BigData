@@ -275,18 +275,117 @@ SELECT subject , avg_sub FROM mv_avg_books ORDER BY avg_sub DESC;
         23,The Alchemist,Paulo Cohelo,Novel,634.80
         ```
 
+CREATE TABLE newbooks(
+id INT,
+title STRING,
+author STRING,
+subject STRING,
+price DOUBLE
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+
+
 
     6. Upload the file newbooks.csv into books_staging.
+
+
+LOAD DATA LOCAL INPATH '/home/aditya/Desktop/Sunbeam/Assigments/BigData/newbooks.csv'
+INTO TABLE newbooks;
+
     7. Insert "new" records from books_staging into books_orc.
+
+INSERT INTO books_staging
+SELECT * FROM newbooks;
+
     8. Display a report that shows subject and average price in descending order -- on materialized view. -- Are new books visible in report?
+
+SELECT * FROM mv_avg_books ORDER BY avg_sub DESC;
+
+
+
     9. Rebuild the materialized view.
+
+ALTER MATERIALIZED VIEW mv_avg_books REBUILD;
+
     10. Display a report that shows subject and average price in descending order -- on materialized view. -- Are new books visible in report?
+    
+SELECT * FROM mv_avg_books ORDER BY avg_sub DESC;
++-----------------------+-----------------------+
+| mv_avg_books.subject  | mv_avg_books.avg_sub  |
++-----------------------+-----------------------+
+| C++ Programming       | 675.214               |
+| Java Programming      | 519.67                |
+| Operating Systems     | 447.3836666666666     |
+| C Programming         | 242.20275             |
+
     11. Increase price of all Java books by 10% in books_orc.
+
++----------------------------+-------------------+----------+---------------------+
+|           title            |      subject      |  price   |    incresed_avg     |
++----------------------------+-------------------+----------+---------------------+
+| Java Complete Reference    | Java Programming  | 525.121  | 52.512100000000004  |
+| Core Java Volume I         | Java Programming  | 575.651  | 57.5651             |
+| Java Programming Language  | Java Programming  | 458.238  | 45.823800000000006  |
++----------------------------+-------------------+----------+---------------------+
+ SELECT title,subject, price , (price*0.1) incresed_avg FROM books_orc WHERE subject="Java Programming";
+
     12. Rebuild the materialized view.
+
+ALTER MATERIALIZED VIEW mv_avg_books REBUILD;
+
     13. Display a report that shows subject and average price in descending order -- on materialized view. -- Are new price changes visible in report?
+
+SELECT * FROM mv_avg_books ORDER BY avg_sub DESC;
++-----------------------+-----------------------+
+| mv_avg_books.subject  | mv_avg_books.avg_sub  |
++-----------------------+-----------------------+
+| C++ Programming       | 675.214               |
+| Java Programming      | 519.67                |
+| Operating Systems     | 447.3836666666666     |
+| C Programming         | 242.20275             |
++-----------------------+-----------------------+
+
+
+
     14. Delete all Java books.
+
+DELETE FROM books_orc WHERE subject="Java Programming";
++---------------+----------------------------------+--------------------+--------------------+------------------+
+| books_orc.id  |         books_orc.title          |  books_orc.author  | books_orc.subject  | books_orc.price  |
++---------------+----------------------------------+--------------------+--------------------+------------------+
+| 1001          | Exploring C                      | Yashwant Kanetkar  | C Programming      | 123.456          |
+| 1002          | Pointers in C                    | Yashwant Kanetkar  | C Programming      | 371.019          |
+| 1003          | ANSI C Programming               | E Balaguruswami    | C Programming      | 334.215          |
+| 1004          | ANSI C Programming               | Dennis Ritchie     | C Programming      | 140.121          |
+| 2001          | C++ Complete Reference           | Herbert Schildt    | C++ Programming    | 417.764          |
+| 2002          | C++ Primer                       | Stanley Lippman    | C++ Programming    | 620.665          |
+| 2003          | C++ Programming Language         | Bjarne Stroustrup  | C++ Programming    | 987.213          |
+| 4001          | Operatig System Concepts         | Peter Galvin       | Operating Systems  | 567.391          |
+| 4002          | Design of UNIX Operating System  | Mauris J Bach      | Operating Systems  | 421.938          |
+| 4003          | UNIX Internals                   | Uresh Vahalia      | Operating Systems  | 352.822          |
++---------------+----------------------------------+--------------------+--------------------+------------------+
+
+
     15. Rebuild the materialized view.
+
+
+ALTER MATERIALIZED VIEW mv_avg_books REBUILD;
+
+
     16. Display a report that shows subject and average price in descending order -- on materialized view. -- Are new price changes visible in report?
+SELECT * FROM mv_avg_books ORDER BY avg_sub DESC;
++-----------------------+-----------------------+
+| mv_avg_books.subject  | mv_avg_books.avg_sub  |
++-----------------------+-----------------------+
+| C++ Programming       | 675.214               |
+| Operating Systems     | 447.3836666666666     |
+| C Programming         | 242.20275             |
++-----------------------+-----------------------+
+
+
 4. Upload busstops.json data into HDFS directory. Then create hive external table to fetch data using JsonSerDe.
     ```
     {"_id":{"$oid":"5a0720b478597fc11004d951"},"stop":"Non-BRTS","code":"103B-D-04","seq":4.0,"stage":1.0,"name":"Aranyeshwar Corner","location":{"type":"Point","coordinates":[73.857675,18.486381]}}
@@ -297,6 +396,39 @@ SELECT subject , avg_sub FROM mv_avg_books ORDER BY avg_sub DESC;
     ```
     When column-name have special charatcters like _ or $, they should be encapsulated in `back-quotes`.
     ```
+
+hadoop fs -mkdir -p /user/$USER/json/input
+hadoop fs -put /home/aditya/Desktop/Sunbeam/BigData/data/bus.json /user/$USER/json/input
+
+CREATE EXTERNAL TABLE busstops(
+`_id` STRUCT<`$oid`:STRING>,
+stop STRING,
+code STRING,
+seq DOUBLE,
+stage DOUBLE,
+name STRING,
+location STRUCT<type:STRING, coordinates:ARRAY<DOUBLE>>
+)
+ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+STORED AS TEXTFILE
+LOCATION '/user/aditya/json/input/';
+
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+|             busstops._id             | busstops.stop  | busstops.code  | busstops.seq  | busstops.stage  |      busstops.name       |                 busstops.location                  |
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+| {"$oid":"5a0720b478597fc11004d951"}  | Non-BRTS       | 103B-D-04      | 4.0           | 1.0             | Aranyeshwar Corner       | {"type":"Point","coordinates":[73.857675,18.486381]} |
+| {"$oid":"5a0720b478597fc11004d952"}  | Non-BRTS       | 103B-D-05      | 5.0           | 2.0             | Natubaug                 | {"type":"Point","coordinates":[73.857167,18.48103]} |
+| {"$oid":"5a0720b478597fc11004d953"}  | Non-BRTS       | 103B-D-07      | 7.0           | 2.0             | Shankar Maharaj Math     | {"type":"Point","coordinates":[73.857234,18.470738]} |
+| {"$oid":"5a0720b478597fc11004d954"}  | Non-BRTS       | 103B-D-06      | 6.0           | 2.0             | Padmawati                | {"type":"Point","coordinates":[73.857244,18.477347]} |
+| {"$oid":"5a0720b478597fc11004d955"}  | Non-BRTS       | 103B-D-08      | 8.0           | 3.0             | Balajinagar              | {"type":"Point","coordinates":[73.858154,18.464405]} |
+| {"$oid":"5a0720b478597fc11004d95b"}  | Non-BRTS       | 103B-D-09      | 9.0           | 3.0             | Bharati Vidyapeeth Gate  | {"type":"Point","coordinates":[73.8582,18.457434]} |
+| {"$oid":"5a0720b478597fc11004d95d"}  | Non-BRTS       | 103B-U-03      | 3.0           | 1.0             | Bharati Vidyapeeth Gate  | {"type":"Point","coordinates":[73.858154,18.457616]} |
+| {"$oid":"5a0720b478597fc11004d95e"}  | Non-BRTS       | 103B-U-04      | 4.0           | 2.0             | Balajinagar              | {"type":"Point","coordinates":[73.857973,18.464558]} |
+| {"$oid":"5a0720b478597fc11004d95f"}  | Non-BRTS       | 103B-U-05      | 5.0           | 2.0             | Shankar Maharaj Math     | {"type":"Point","coordinates":[73.857067,18.470349]} |
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+
+
+
 5. Implement Movie recommendation system.
     * Example Input Data
         ```
@@ -309,7 +441,22 @@ SELECT subject , avg_sub FROM mv_avg_books ORDER BY avg_sub DESC;
         87,19,1,0
         87,21,2,0
         98,19,2,0
+        
         ```
+CREATE TABLE small_movie_rating(
+userId INT,
+movieId INT,
+rating INT,
+rtime SMALLINT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+LOAD DATA LOCAL INPATH '/home/aditya/Desktop/Sunbeam/BigData/data/new_movie_rating.csv'
+INTO TABLE small_movie_rating;
+
+
     * Create pairs of movies rated by same user.
         ```
         userId,movie1,rating1,movie2,rating2
@@ -318,6 +465,35 @@ SELECT subject , avg_sub FROM mv_avg_books ORDER BY avg_sub DESC;
         49,19,2.0,70,4.0
         87,19,1.0,21,2.0
         ```
+
+CREATE TABLE small_movie_pair(
+userId INT,
+movie1 INT,
+rating1 INT,
+movie2 INT,
+rating2 INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+INSERT INTO small_movie_pair
+SELECT DISTINCT m1.userId userid,m1.movieId movie1,m1.rating rating1,m2.movieId movie2,m2.rating rating2 FROM movie_ratings m1 INNER JOIN movie_ratings m2 ON m1.userId=m2.userId WHERE m1.userId=m2.userId AND m1.movieId < m2.movieId ;
+
+movie_ratings
+| movie_ratings.userid  | movie_ratings.movieid  | movie_ratings.rating  | movie_ratings.tm_stamp  |
++-----------------------+------------------------+-----------------------+-------------------------+
+| 671                   | 6269                   | 4.0                   | 1065149201              |
+| 671                   | 6365                   | 4.0                   | 1070940363              |
+
+| m1.userid  | m1.movieid  | m1.rating  | m2.movieid  | m2.rating  |
++------------+-------------+------------+-------------+------------+
+| 49         | 21          | 1          | 19          | 2          |
+| 49         | 70          | 4          | 19          | 2          |
+| 49         | 70          | 4          | 21          | 1          |
+| 87         | 21          | 2          | 19          | 1          |
+
+
     * Create correlation table.
         ```
         movie1,movie2,cnt,cor
@@ -325,6 +501,40 @@ SELECT subject , avg_sub FROM mv_avg_books ORDER BY avg_sub DESC;
         19,70,1,0.0
         21,70,1,0.0
         ```
+
+CREATE TABLE big_movie_pair(
+userId INT,
+movie1 INT,
+rating1 INT,
+movie2 INT,
+rating2 INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+CREATE MATERIALIZED VIEW mv_big_movie_pair AS
+SELECT DISTINCT m1.userId userid,m1.movieId movie1,m1.rating rating1,m2.movieId movie2,m2.rating rating2 FROM movie_ratings m1 INNER JOIN movie_ratings m2 ON m1.userId=m2.userId WHERE m1.movieId < m2.movieId ;
+
+SELECT DISTINCT m1.userId userid,m1.movieId movie1,m1.rating rating1,m2.movieId movie2,m2.rating rating2 FROM movie_ratings m1 INNER JOIN movie_ratings m2 ON m1.userId=m2.userId WHERE m1.userId=m2.userId AND m1.movieId > m2.movieId ;
+
+CREATE MATERIALIZED VIEW mv_big_corr AS 
+SELECT movie1,movie2, count(*) cnt,ROUND(nvl(corr(rating1,rating2),0),2)  corr FROM small_movie_pair GROUP BY movie1,movie2;
+
+
+SELECT movie1,movie2, count(*) cnt,ROUND(nvl(corr(rating1,rating2),0),2)  corr FROM small_movie_pair GROUP BY movie1,movie2;
+
+
++---------+---------+------+
+| movie1  | movie2  | _c2  |
++---------+---------+------+
+| 21      | 19      | 2    |
+| 70      | 19      | 1    |
+| 70      | 21      | 1    |
++---------+---------+------+
+
+
+
     * Predict Similar movies for given movie Id. Get the recommended movies titles from movies table.
     * Hints
         * Start with above small data tables to test accuracy of the steps.
@@ -333,3 +543,27 @@ SELECT subject , avg_sub FROM mv_avg_books ORDER BY avg_sub DESC;
         * You may need to change reducer tasks memory for quicker execution and avoid OutOfMemory errors.
             * SET mapreduce.reduce.memory.mb = 4096;
             * SET mapreduce.reduce.java.opts = -Xmx4096m;
+
+CREATE TABLE user_rating(
+        userid INT,
+        movieid1 INT,
+        rating1 DOUBLE,
+        movieid2 INT,
+        rating2 DOUBLE
+    )
+    STORED AS ORC
+    TBLPROPERTIES('transactional'='true');
+
+    INSERT INTO user_rating
+    SELECT r1.userid, r1.movieid, r1.rating, r2.movieid, r2.rating
+    FROM movie_ratings r1
+    INNER JOIN movie_ratings r2 ON r1.userid=r2.userid
+    WHERE r1.movieid<r2.movieid;
+
+    CREATE MATERIALIZED VIEW mv_movie_corr AS
+    SELECT movieid1, movieid2, COUNT(*) cnt, ROUND(nvl(corr(rating1, rating2),0),2) corr FROM user_rating GROUP BY movieid1, movieid2;
+
+    SELECT * FROM mv_movie_corr;
+
+
+

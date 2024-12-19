@@ -1,0 +1,182 @@
+1. Upload busstops.json data into HDFS directory. Then create hive external table to fetch data using JsonSerDe.
+    ```
+    {"_id":{"$oid":"5a0720b478597fc11004d951"},"stop":"Non-BRTS","code":"103B-D-04","seq":4.0,"stage":1.0,"name":"Aranyeshwar Corner","location":{"type":"Point","coordinates":[73.857675,18.486381]}}
+    ```
+    ``` 
+    location STRUCT<type:STRING, coordinates:ARRAY<DOUBLE>>
+    ```
+    ```
+    When column-name have special charatcters like _ or $, they should be encapsulated in `back-quotes`.
+    ```
+
+hadoop fs -mkdir -p /user/$USER/json/input
+
+CREATE EXTERNAL TABLE busstops(
+`_id` STRUCT<`$oid`:STRING>,
+stop STRING,
+code STRING,
+seq DOUBLE,
+stage DOUBLE,
+name STRING,
+location STRUCT<type:STRING, coordinates:ARRAY<DOUBLE>>
+)
+ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+STORED AS TEXTFILE
+LOCATION '/user/aditya/json/input/';
+
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+|             busstops._id             | busstops.stop  | busstops.code  | busstops.seq  | busstops.stage  |      busstops.name       |                 busstops.location                  |
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+| {"$oid":"5a0720b478597fc11004d951"}  | Non-BRTS       | 103B-D-04      | 4.0           | 1.0             | Aranyeshwar Corner       | {"type":"Point","coordinates":[73.857675,18.486381]} |
+| {"$oid":"5a0720b478597fc11004d952"}  | Non-BRTS       | 103B-D-05      | 5.0           | 2.0             | Natubaug                 | {"type":"Point","coordinates":[73.857167,18.48103]} |
+| {"$oid":"5a0720b478597fc11004d953"}  | Non-BRTS       | 103B-D-07      | 7.0           | 2.0             | Shankar Maharaj Math     | {"type":"Point","coordinates":[73.857234,18.470738]} |
+| {"$oid":"5a0720b478597fc11004d954"}  | Non-BRTS       | 103B-D-06      | 6.0           | 2.0             | Padmawati                | {"type":"Point","coordinates":[73.857244,18.477347]} |
+| {"$oid":"5a0720b478597fc11004d955"}  | Non-BRTS       | 103B-D-08      | 8.0           | 3.0             | Balajinagar              | {"type":"Point","coordinates":[73.858154,18.464405]} |
+| {"$oid":"5a0720b478597fc11004d95b"}  | Non-BRTS       | 103B-D-09      | 9.0           | 3.0             | Bharati Vidyapeeth Gate  | {"type":"Point","coordinates":[73.8582,18.457434]} |
+| {"$oid":"5a0720b478597fc11004d95d"}  | Non-BRTS       | 103B-U-03      | 3.0           | 1.0             | Bharati Vidyapeeth Gate  | {"type":"Point","coordinates":[73.858154,18.457616]} |
+| {"$oid":"5a0720b478597fc11004d95e"}  | Non-BRTS       | 103B-U-04      | 4.0           | 2.0             | Balajinagar              | {"type":"Point","coordinates":[73.857973,18.464558]} |
+| {"$oid":"5a0720b478597fc11004d95f"}  | Non-BRTS       | 103B-U-05      | 5.0           | 2.0             | Shankar Maharaj Math     | {"type":"Point","coordinates":[73.857067,18.470349]} |
++--------------------------------------+----------------+----------------+---------------+-----------------+--------------------------+----------------------------------------------------+
+
+
+
+2. Execute following queries on MySQL emp database using Recursive CTEs (not supported in Hive 3.x).
+    1. Find years in range 1975 to 1985, where no emps were hired.
+
+
+WITH RECURSIVE years AS (
+    (SELECT 1975 AS yr)
+    UNION
+    (SELECT yr+1 FROM years WHERE yr<1985)
+)
+SELECT DISTINCT YEAR(hire) yrs FROM emp WHERE YEAR(hire) NOT IN (SELECT yr FROM years);
+
+Empty set (0.01 sec)
+
+
+    2. Display emps with their level in emp hierarchy. Level employee is Level of his manager + 1.
+
+
+WITH RECURSIVE emp_hirerachy AS(
+    (SELECT empno,ename,mgr,sal, 1 AS level FROM emp WHERE mgr IS NULL)
+    UNION
+    (SELECT e.empno,e.ename,e.mgr,e.sal,level + 1 FROM emp e 
+    INNER JOIN emp_hirerachy eh ON e.mgr = eh.empno)
+)
+SELECT * FROM emp_hirerachy;
++-------+--------+------+---------+-------+
+| empno | ename  | mgr  | sal     | level |
++-------+--------+------+---------+-------+
+|  7839 | KING   | NULL | 5000.00 |     1 |
+|  7566 | JONES  | 7839 | 2975.00 |     2 |
+|  7698 | BLAKE  | 7839 | 2850.00 |     2 |
+|  7782 | CLARK  | 7839 | 2450.00 |     2 |
+|  7499 | ALLEN  | 7698 | 1600.00 |     3 |
+|  7521 | WARD   | 7698 | 1250.00 |     3 |
+|  7654 | MARTIN | 7698 | 1250.00 |     3 |
+|  7788 | SCOTT  | 7566 | 3000.00 |     3 |
+|  7844 | TURNER | 7698 | 1500.00 |     3 |
+|  7900 | JAMES  | 7698 |  950.00 |     3 |
+|  7902 | FORD   | 7566 | 3000.00 |     3 |
+|  7934 | MILLER | 7782 | 1300.00 |     3 |
+|  7369 | SMITH  | 7902 |  800.00 |     4 |
+|  7876 | ADAMS  | 7788 | 1100.00 |     4 |
++-------+--------+------+---------+-------+
+14 rows in set (0.00 sec)
+
+    3. Create a "newemp" table with foreign constraints enabled for "mgr" column. Also enable DELETE ON CASCADE for the same. Insert data into the table from emp table. Hint: You need to insert data levelwise to avoid FK constraint error.
+    
+
+
+
+
+    4. From "newemp" table, delete employee KING. What is result?
+
+
+3. Load Fire data into Hive in a staging table "fire_staging".
+
+
+CREATE TABLE fire_staging (
+    Call_Number INT,
+    Unit_ID STRING,
+    Incident_Number INT,
+    Call_Type STRING,
+    Call_Date DATE,
+    Watch_Date DATE,
+    Received_DtTm TIMESTAMP,
+    Entry_DtTm TIMESTAMP,
+    Dispatch_DtTm STRING,
+    Response_DtTm STRING,
+    On_Scene_DtTm STRING,
+    Transport_DtTm STRING,
+    Hospital_DtTm STRING,
+    Call_Final_Disposition STRING,
+    Available_DtTm STRING,
+    Address STRING,
+    City STRING,
+    Zipcode_of_Incident INT,
+    Battalion STRING,
+    Station_Area STRING,
+    Box INT,
+    Original_Priority STRING,
+    Priority STRING,
+    Final_Priority INT,
+    ALS_Unit STRING,
+    Call_Type_Group STRING,
+    Number_of_Alarms INT,
+    Unit_Type STRING,
+    Unit_Sequence_in_Call_Dispatch STRING,
+    Fire_Prevention_District INT,
+    Supervisor_District INT,
+    Neighborhoods_Analysis_Boundaries STRING,
+    RowID STRING,
+    Case_Location STRING,
+    Data_As_Of STRING,
+    Data_Loaded_At STRING,
+    Analysis_Neighborhoods INT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+
+LOAD DATA LOCAL INPATH '/home/aditya/Desktop/Sunbeam/Fire_Department_Calls_for_Service.csv'
+INTO TABLE fire_staging;
+
+4. Implement Movie recommendation system.
+    * Example Input Data
+        ```
+        userId,movieId,rating,rtime
+        17,70,3,0
+        35,21,1,0
+        49,19,2,0
+        49,21,1,0
+        49,70,4,0
+        87,19,1,0
+        87,21,2,0
+        98,19,2,0
+        ```
+    * Create pairs of movies rated by same user.
+        ```
+        userId,movie1,rating1,movie2,rating2
+        49,21,1.0,70,4.0
+        49,19,2.0,21,1.0
+        49,19,2.0,70,4.0
+        87,19,1.0,21,2.0
+        ```
+    * Create correlation table.
+        ```
+        movie1,movie2,cnt,cor
+        19,21,2,-1.0
+        19,70,1,0.0
+        21,70,1,0.0
+        ```
+    * Predict Similar movies for given movie Id. Get the recommended movies titles from movies table.
+    * Hints
+        * Start with above small data tables to test accuracy of the steps.
+        * You will need to create new intermediate tables to store results of earlier queries.
+        * For main data use ORC format to speed-up the queries.
+        * You may need to change reducer tasks memory for quicker execution and avoid OutOfMemory errors.
+            * SET mapreduce.reduce.memory.mb = 4096;
+            * SET mapreduce.reduce.java.opts = -Xmx4096m;
+    * Input movie id in Python/Java application and show related 5 movies.
