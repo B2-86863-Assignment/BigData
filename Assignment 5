@@ -1,0 +1,187 @@
+1. Create a transactional ORC table "ﬁre_data" with appropriate data types partitioned by city and buckted by call number into 4 buckets. Load data from staging table into this table.
+
+create table fire_staging(
+callno int,
+uid int,
+incno int,
+calltype string,
+calldate string,
+watchdate string,
+reciveddate string,
+entrydate string,
+dispatchdate string,
+responsedtime string,
+on_scene_dtm string,
+transport_dtm string,
+hospital_dtm string,
+call_final_disposition string,
+available_dtm string,
+address string,
+city string,
+zipcode string,
+battalion string,
+station_area string,
+box int,
+o_priority string,
+priority string,
+f_priority int,
+als_unit string,
+call_type_group string,
+no_of_alarms int,
+unit_type string,
+ut_seq_call_dispatch int,
+fire_prev_district int,
+supervisior_district int,
+neighborhood_bound string,
+rowid string,
+case_location string,
+data_as_of string,
+data_loaded_at string,
+Analysis_neighbor int
+)
+Row format SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+with SERDEPROPERTIES(
+'separatorChar' =',',
+'quoteChar' = '"',
+'escapeChar' = '\\'
+)
+stored as textfile
+TBLPROPERTIES ('skip.header.line.count'='1');
+
+LOAD DATA LOCAL INPATH '/home/aditya/Desktop/Sunbeam/Fire_Department_Calls_for_Service.csv' INTO TABLE fire_staging;
+
+
+
+create table fire_data(
+callno int,
+uid string,
+incno int,
+calltype string,
+calldate date,
+watchdate date,
+reciveddate timestamp,
+entrydate timestamp,
+dispatchdate timestamp,
+responsedtime timestamp,
+on_scene_dtm timestamp,
+transport_dtm timestamp,
+hospital_dtm timestamp,
+call_final_disposition string,
+available_dtm timestamp,
+address string,
+zipcode int,
+battalion string,
+station_area string,
+box int,
+o_priority string,
+priority string,
+f_priority int,
+als_unit string,
+call_type_group string,
+no_of_alarms int,
+unit_type string,
+ut_seq_call_dispatch int,
+fire_prev_district int,
+supervisior_district int,
+neighborhood_bound string,
+rowid string,
+case_location string,
+data_as_of string,
+data_loaded_at timestamp,
+Analysis_neighbor int
+)
+PARTITIONED BY (city string)
+CLUSTERED BY (callno) into 4 buckets
+stored as ORC
+TBLPROPERTIES ('transactional'='true');
+
+select from_unixtime(unix_timestamp('03/07/2008 04:06:05 PM','MM/dd/yyyy hh:mm:ss a'));
+
+SELECT to_date(FROM_UNIXTIME(UNIX_TIMESTAMP('03/07/2008','MM/dd/yyyy')))
+
+insert into fire_data partition(city)
+select callno,uid,incno,calltype,to_date(FROM_UNIXTIME(UNIX_TIMESTAMP(calldate,'MM/dd/yyyy'))) calldate,to_date(FROM_UNIXTIME(UNIX_TIMESTAMP(watchdate,'MM/dd/yyyy'))) watchdate,from_unixtime(unix_timestamp(reciveddate,'MM/dd/yyyy hh:mm:ss a')) as recieveddate,from_unixtime(unix_timestamp(entrydate,'MM/dd/yyyy hh:mm:ss a')) as entrydate,from_unixtime(unix_timestamp(dispatchdate,'MM/dd/yyyy hh:mm:ss a')) as dispatchdate,from_unixtime(unix_timestamp(responsedtime,'MM/dd/yyyy hh:mm:ss a')) as responsedtime,from_unixtime(unix_timestamp(on_scene_dtm,'MM/dd/yyyy hh:mm:ss a')) as on_scene_dtm,from_unixtime(unix_timestamp(transport_dtm,'MM/dd/yyyy hh:mm:ss a')) as transport_dtm,from_unixtime(unix_timestamp(hospital_dtm,'MM/dd/yyyy hh:mm:ss a')) as hospital_dtm,call_final_disposition,from_unixtime(unix_timestamp(available_dtm,'MM/dd/yyyy hh:mm:ss a')) as available_dtm,address,zipcode,battalion,station_area,box,o_priority,priority,f_priority,als_unit,call_type_group,no_of_alarms,unit_type,ut_seq_call_dispatch,fire_prev_district,supervisior_district,neighborhood_bound,rowid,case_location,data_as_of,from_unixtime(unix_timestamp(data_loaded_at,'MM/dd/yyyy hh:mm:ss a')) as data_loaded_at,Analysis_neighbor,city from fire_staging;
+
+2. Execute following queries on ﬁre dataset.
+
+1. How many distinct types of calls were made to the ﬁre department?
+select count(distinct calltype) from fire_data;
+INFO  : OK
++------+
+| _c0  |
++------+
+| 33   |
++------+
+1 row selected (142.632 seconds)
+
+2. What are distinct types of calls made to the ﬁre department?
+select distinct calltype from fire_data;
++--------------------------------------+
+|              calltype                |
++--------------------------------------+
+| "Extrication / Entrapped (Machinery  |
+| Administrative                       |
+| Alarms                               |
+| Electrical Hazard                    |
+| Elevator / Escalator Rescue          |
+| Fuel Spill                           |
+| Gas Leak (Natural and LP Gases)      |
+| High Angle Rescue                    |
+| Marine Fire                          |
+| Mutual Aid / Assist Outside Agency   |
+| Odor (Strange / Unknown)             |
+| Oil Spill                            |
+| Other                                |
+| Structure Fire / Smoke in Building   |
+| Vehicle Fire                         |
+| Water Rescue                         |
+| Aircraft Emergency                   |
+| Assist Police                        |
+| Citizen Assist / Service Call        |
+| Confined Space / Structure Collapse  |
+| Explosion                            |
+| HazMat                               |
+| Industrial Accidents                 |
+| Lightning Strike (Investigation)     |
+| Medical Incident                     |
+| Outside Fire                         |
+| Smoke Investigation (Outside)        |
+| Structure Fire                       |
+| Suspicious Package                   |
+| Traffic Collision                    |
+| Train / Rail Fire                    |
+| Train / Rail Incident                |
+| Watercraft in Distress               |
++--------------------------------------+
+33 rows selected (219.984 seconds)
+
+3. Find out all responses for delayed times greater than 5 mins?
+SELECT count(minute(Responsedtime)-minute(reciveddate)) from fire_data where minute(Responsedtime)-minute(reciveddate)>5;
++---------+
+|   _c0   |     959841
++---------+
+| 631208  |
++---------+
+1 row selected (245.512 seconds)
+
+4. What were the most common call types?
+select call_type,count(call_type) from fire_data group by call_type order by count(call_type) desc;
+
+
+
+5. What zip codes accounted for the most common calls?
+select zipcode, call_type, count(call_type) from fire_data group by zipcode,call_type order by count(call_type) desc limit 50;
+
+
+
+6. What San Francisco neighborhoods are in the zip codes 94102 and 94103?
+7. What was the sum of all calls, average, min, and max of the call response times?
+8. How many distinct years of data are in the CSV ﬁle?
+9. What week of the year in 2018 had the most ﬁre calls?
+10. What neighborhoods in San Francisco had the worst response time in 2018?
+
+
+
+
+
+

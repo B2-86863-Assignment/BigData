@@ -14,12 +14,11 @@ conn = hive.Connection(host=host_name, port=port, username=user, password=passwo
 cur = conn.cursor()
 
 # execute the sql query using cursor
-sal = input('Enter minimum salary: ')
-sql = "SELECT * FROM emp WHERE sal > %s"
+movieId = input('Enter The movieId: ')
 sql = "select rc.movieid2, ms.title , rc.corr from mv_movie_corr rc INNER JOIN movie_staging ms ON ms.movieid=rc.movieid2  where rc.movieid1=%s ORDER BY rc.corr DESC LIMIT 5"
-cur.execute(sql, [rc.movieid1])
+cur.execute(sql, [movieId])
 
-# collect/process result
+
 result = cur.fetchall()
 for row in result:
     print(row)

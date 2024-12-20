@@ -559,11 +559,17 @@ CREATE TABLE user_rating(
     FROM movie_ratings r1
     INNER JOIN movie_ratings r2 ON r1.userid=r2.userid
     WHERE r1.movieid<r2.movieid;
+    
+    
 
     CREATE MATERIALIZED VIEW mv_movie_corr AS
     SELECT movieid1, movieid2, COUNT(*) cnt, ROUND(nvl(corr(rating1, rating2),0),2) corr FROM user_rating GROUP BY movieid1, movieid2;
 
     SELECT * FROM mv_movie_corr;
 
-
+-- to drop 
+	- user_rating
+	- mv_movie_corr
+	- mv_big_corr
+	- big_movie_pair
 
