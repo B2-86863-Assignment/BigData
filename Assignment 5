@@ -156,6 +156,7 @@ select distinct calltype from fire_data;
 33 rows selected (219.984 seconds)
 
 3. Find out all responses for delayed times greater than 5 mins?
+
 SELECT count(minute(Responsedtime)-minute(reciveddate)) from fire_data where minute(Responsedtime)-minute(reciveddate)>5;
 +---------+
 |   _c0   |     959841
@@ -167,21 +168,400 @@ SELECT count(minute(Responsedtime)-minute(reciveddate)) from fire_data where min
 4. What were the most common call types?
 select call_type,count(call_type) from fire_data group by call_type order by count(call_type) desc;
 
+select COUNT(*)/COUNT( 
+
+
+SELECT calltype,count(*) cnt FROM fire_data GROUP BY calltype ORDER BY cnt DESC;
++-----------------------------------------------+----------+
+|                   calltype                    |   cnt    |
++-----------------------------------------------+----------+
+| Medical Incident                              | 4247943  |
+| Alarms                                        | 720968   |
+| Structure Fire                                | 714873   |
+| Traffic Collision                             | 259541   |
+| Other                                         | 110855   |
+| Citizen Assist / Service Call                 | 96222    |
+| Outside Fire                                  | 85967    |
+| Water Rescue                                  | 34061    |
+| Gas Leak (Natural and LP Gases)               | 30484    |
+| Vehicle Fire                                  | 28378    |
+| Electrical Hazard                             | 21907    |
+| Structure Fire / Smoke in Building            | 18894    |
+| Elevator / Escalator Rescue                   | 17952    |
+| Smoke Investigation (Outside)                 | 14613    |
+| Odor (Strange / Unknown)                      | 13673    |
+| Fuel Spill                                    | 7038     |
+| HazMat                                        | 4399     |
+| Industrial Accidents                          | 3333     |
+| Explosion                                     | 3067     |
+| Train / Rail Incident                         | 1715     |
+| Aircraft Emergency                            | 1512     |
+| Assist Police                                 | 1508     |
+| High Angle Rescue                             | 1456     |
+| Watercraft in Distress                        | 1237     |
+| Extrication / Entrapped (Machinery, Vehicle)  | 935      |
+| Confined Space / Structure Collapse           | 791      |
+| Mutual Aid / Assist Outside Agency            | 626      |
+| Oil Spill                                     | 518      |
+| Marine Fire                                   | 508      |
+| Suspicious Package                            | 368      |
+| Administrative                                | 345      |
+| Train / Rail Fire                             | 120      |
+| Lightning Strike (Investigation)              | 21       |
++-----------------------------------------------+----------+
+33 rows selected (274.487 seconds)
+
 
 
 5. What zip codes accounted for the most common calls?
-select zipcode, call_type, count(call_type) from fire_data group by zipcode,call_type order by count(call_type) desc limit 50;
+WITH cte1 AS(
+SELECT calltype,count(*) cnt FROM fire_data GROUP BY calltype ORDER BY cnt DESC LIMIT 10
+)
+SELECT DISTINCT c.calltype,f.zipcode FROM cte1 c LEFT JOIN fire_data f ON c.calltype=f.calltype;
 
+
+
+SELECT zipcode, calltype, count(calltype) FROM fire_data GROUP BY czipcode, calltype;
+|            c.calltype            | f.zipcode  |
++----------------------------------+------------+
+| Alarms                           | NULL       |
+| Alarms                           | 94102      |
+| Alarms                           | 94103      |
+| Alarms                           | 94104      |
+| Alarms                           | 94105      |
+| Alarms                           | 94107      |
+| Alarms                           | 94108      |
+| Alarms                           | 94109      |
+| Alarms                           | 94110      |
+| Alarms                           | 94111      |
+| Alarms                           | 94112      |
+| Alarms                           | 94114      |
+| Alarms                           | 94115      |
+| Alarms                           | 94116      |
+| Alarms                           | 94117      |
+| Alarms                           | 94118      |
+| Alarms                           | 94121      |
+| Alarms                           | 94122      |
+| Alarms                           | 94123      |
+| Alarms                           | 94124      |
+| Alarms                           | 94127      |
+| Alarms                           | 94129      |
+| Alarms                           | 94130      |
+| Alarms                           | 94131      |
+| Alarms                           | 94132      |
+| Alarms                           | 94133      |
+| Alarms                           | 94134      |
+| Alarms                           | 94158      |
+| Citizen Assist / Service Call    | NULL       |
+| Citizen Assist / Service Call    | 94102      |
+| Citizen Assist / Service Call    | 94103      |
+| Citizen Assist / Service Call    | 94104      |
+| Citizen Assist / Service Call    | 94105      |
+| Citizen Assist / Service Call    | 94107      |
+| Citizen Assist / Service Call    | 94108      |
+| Citizen Assist / Service Call    | 94109      |
+| Citizen Assist / Service Call    | 94110      |
+| Citizen Assist / Service Call    | 94111      |
+| Citizen Assist / Service Call    | 94112      |
+| Citizen Assist / Service Call    | 94114      |
+| Citizen Assist / Service Call    | 94115      |
+| Citizen Assist / Service Call    | 94116      |
+| Citizen Assist / Service Call    | 94117      |
+| Citizen Assist / Service Call    | 94118      |
+| Citizen Assist / Service Call    | 94121      |
+| Citizen Assist / Service Call    | 94122      |
+| Citizen Assist / Service Call    | 94123      |
+| Citizen Assist / Service Call    | 94124      |
+| Citizen Assist / Service Call    | 94127      |
+| Citizen Assist / Service Call    | 94129      |
+| Citizen Assist / Service Call    | 94130      |
+| Citizen Assist / Service Call    | 94131      |
+| Citizen Assist / Service Call    | 94132      |
+| Citizen Assist / Service Call    | 94133      |
+| Citizen Assist / Service Call    | 94134      |
+| Citizen Assist / Service Call    | 94158      |
+| Gas Leak (Natural and LP Gases)  | NULL       |
+| Gas Leak (Natural and LP Gases)  | 94102      |
+| Gas Leak (Natural and LP Gases)  | 94103      |
+| Gas Leak (Natural and LP Gases)  | 94104      |
+| Gas Leak (Natural and LP Gases)  | 94105      |
+| Gas Leak (Natural and LP Gases)  | 94107      |
+| Gas Leak (Natural and LP Gases)  | 94108      |
+| Gas Leak (Natural and LP Gases)  | 94109      |
+| Gas Leak (Natural and LP Gases)  | 94110      |
+| Gas Leak (Natural and LP Gases)  | 94111      |
+| Gas Leak (Natural and LP Gases)  | 94112      |
+| Gas Leak (Natural and LP Gases)  | 94114      |
+| Gas Leak (Natural and LP Gases)  | 94115      |
+| Gas Leak (Natural and LP Gases)  | 94116      |
+| Gas Leak (Natural and LP Gases)  | 94117      |
+| Gas Leak (Natural and LP Gases)  | 94118      |
+| Gas Leak (Natural and LP Gases)  | 94121      |
+| Gas Leak (Natural and LP Gases)  | 94122      |
+| Gas Leak (Natural and LP Gases)  | 94123      |
+| Gas Leak (Natural and LP Gases)  | 94124      |
+| Gas Leak (Natural and LP Gases)  | 94127      |
+| Gas Leak (Natural and LP Gases)  | 94129      |
+| Gas Leak (Natural and LP Gases)  | 94130      |
+| Gas Leak (Natural and LP Gases)  | 94131      |
+| Gas Leak (Natural and LP Gases)  | 94132      |
+| Gas Leak (Natural and LP Gases)  | 94133      |
+| Gas Leak (Natural and LP Gases)  | 94134      |
+| Gas Leak (Natural and LP Gases)  | 94158      |
+| Medical Incident                 | NULL       |
+| Medical Incident                 | 94102      |
+| Medical Incident                 | 94103      |
+| Medical Incident                 | 94104      |
+| Medical Incident                 | 94105      |
+| Medical Incident                 | 94107      |
+| Medical Incident                 | 94108      |
+| Medical Incident                 | 94109      |
+| Medical Incident                 | 94110      |
+| Medical Incident                 | 94111      |
+| Medical Incident                 | 94112      |
+| Medical Incident                 | 94114      |
+| Medical Incident                 | 94115      |
+| Medical Incident                 | 94116      |
+| Medical Incident                 | 94117      |
+| Medical Incident                 | 94118      |
++----------------------------------+------------+
+|            c.calltype            | f.zipcode  |
++----------------------------------+------------+
+| Medical Incident                 | 94121      |
+| Medical Incident                 | 94122      |
+| Medical Incident                 | 94123      |
+| Medical Incident                 | 94124      |
+| Medical Incident                 | 94127      |
+| Medical Incident                 | 94129      |
+| Medical Incident                 | 94130      |
+| Medical Incident                 | 94131      |
+| Medical Incident                 | 94132      |
+| Medical Incident                 | 94133      |
+| Medical Incident                 | 94134      |
+| Medical Incident                 | 94158      |
+| Other                            | NULL       |
+| Other                            | 94102      |
+| Other                            | 94103      |
+| Other                            | 94104      |
+| Other                            | 94105      |
+| Other                            | 94107      |
+| Other                            | 94108      |
+| Other                            | 94109      |
+| Other                            | 94110      |
+| Other                            | 94111      |
+| Other                            | 94112      |
+| Other                            | 94114      |
+| Other                            | 94115      |
+| Other                            | 94116      |
+| Other                            | 94117      |
+| Other                            | 94118      |
+| Other                            | 94121      |
+| Other                            | 94122      |
+| Other                            | 94123      |
+| Other                            | 94124      |
+| Other                            | 94127      |
+| Other                            | 94129      |
+| Other                            | 94130      |
+| Other                            | 94131      |
+| Other                            | 94132      |
+| Other                            | 94133      |
+| Other                            | 94134      |
+| Other                            | 94158      |
+| Outside Fire                     | NULL       |
+| Outside Fire                     | 94102      |
+| Outside Fire                     | 94103      |
+| Outside Fire                     | 94104      |
+| Outside Fire                     | 94105      |
+| Outside Fire                     | 94107      |
+| Outside Fire                     | 94108      |
+| Outside Fire                     | 94109      |
+| Outside Fire                     | 94110      |
+| Outside Fire                     | 94111      |
+| Outside Fire                     | 94112      |
+| Outside Fire                     | 94114      |
+| Outside Fire                     | 94115      |
+| Outside Fire                     | 94116      |
+| Outside Fire                     | 94117      |
+| Outside Fire                     | 94118      |
+| Outside Fire                     | 94121      |
+| Outside Fire                     | 94122      |
+| Outside Fire                     | 94123      |
+| Outside Fire                     | 94124      |
+| Outside Fire                     | 94127      |
+| Outside Fire                     | 94129      |
+| Outside Fire                     | 94130      |
+| Outside Fire                     | 94131      |
+| Outside Fire                     | 94132      |
+| Outside Fire                     | 94133      |
+| Outside Fire                     | 94134      |
+| Outside Fire                     | 94158      |
+| Structure Fire                   | NULL       |
+| Structure Fire                   | 94102      |
+| Structure Fire                   | 94103      |
+| Structure Fire                   | 94104      |
+| Structure Fire                   | 94105      |
+| Structure Fire                   | 94107      |
+| Structure Fire                   | 94108      |
+| Structure Fire                   | 94109      |
+| Structure Fire                   | 94110      |
+| Structure Fire                   | 94111      |
+| Structure Fire                   | 94112      |
+| Structure Fire                   | 94114      |
+| Structure Fire                   | 94115      |
+| Structure Fire                   | 94116      |
+| Structure Fire                   | 94117      |
+| Structure Fire                   | 94118      |
+| Structure Fire                   | 94121      |
+| Structure Fire                   | 94122      |
+| Structure Fire                   | 94123      |
+| Structure Fire                   | 94124      |
+| Structure Fire                   | 94127      |
+| Structure Fire                   | 94129      |
+| Structure Fire                   | 94130      |
+| Structure Fire                   | 94131      |
+| Structure Fire                   | 94132      |
+| Structure Fire                   | 94133      |
+| Structure Fire                   | 94134      |
+| Structure Fire                   | 94158      |
+| Traffic Collision                | NULL       |
+| Traffic Collision                | 94102      |
+| Traffic Collision                | 94103      |
+| Traffic Collision                | 94104      |
++----------------------------------+------------+
+|            c.calltype            | f.zipcode  |
++----------------------------------+------------+
+| Traffic Collision                | 94105      |
+| Traffic Collision                | 94107      |
+| Traffic Collision                | 94108      |
+| Traffic Collision                | 94109      |
+| Traffic Collision                | 94110      |
+| Traffic Collision                | 94111      |
+| Traffic Collision                | 94112      |
+| Traffic Collision                | 94114      |
+| Traffic Collision                | 94115      |
+| Traffic Collision                | 94116      |
+| Traffic Collision                | 94117      |
+| Traffic Collision                | 94118      |
+| Traffic Collision                | 94121      |
+| Traffic Collision                | 94122      |
+| Traffic Collision                | 94123      |
+| Traffic Collision                | 94124      |
+| Traffic Collision                | 94127      |
+| Traffic Collision                | 94129      |
+| Traffic Collision                | 94130      |
+| Traffic Collision                | 94131      |
+| Traffic Collision                | 94132      |
+| Traffic Collision                | 94133      |
+| Traffic Collision                | 94134      |
+| Traffic Collision                | 94158      |
+| Vehicle Fire                     | NULL       |
+| Vehicle Fire                     | 94102      |
+| Vehicle Fire                     | 94103      |
+| Vehicle Fire                     | 94104      |
+| Vehicle Fire                     | 94105      |
+| Vehicle Fire                     | 94107      |
+| Vehicle Fire                     | 94108      |
+| Vehicle Fire                     | 94109      |
+| Vehicle Fire                     | 94110      |
+| Vehicle Fire                     | 94111      |
+| Vehicle Fire                     | 94112      |
+| Vehicle Fire                     | 94114      |
+| Vehicle Fire                     | 94115      |
+| Vehicle Fire                     | 94116      |
+| Vehicle Fire                     | 94117      |
+| Vehicle Fire                     | 94118      |
+| Vehicle Fire                     | 94121      |
+| Vehicle Fire                     | 94122      |
+| Vehicle Fire                     | 94123      |
+| Vehicle Fire                     | 94124      |
+| Vehicle Fire                     | 94127      |
+| Vehicle Fire                     | 94129      |
+| Vehicle Fire                     | 94130      |
+| Vehicle Fire                     | 94131      |
+| Vehicle Fire                     | 94132      |
+| Vehicle Fire                     | 94133      |
+| Vehicle Fire                     | 94134      |
+| Vehicle Fire                     | 94158      |
+| Water Rescue                     | NULL       |
+| Water Rescue                     | 94102      |
+| Water Rescue                     | 94103      |
+| Water Rescue                     | 94105      |
+| Water Rescue                     | 94107      |
+| Water Rescue                     | 94108      |
+| Water Rescue                     | 94109      |
+| Water Rescue                     | 94110      |
+| Water Rescue                     | 94111      |
+| Water Rescue                     | 94112      |
+| Water Rescue                     | 94114      |
+| Water Rescue                     | 94116      |
+| Water Rescue                     | 94117      |
+| Water Rescue                     | 94118      |
+| Water Rescue                     | 94121      |
+| Water Rescue                     | 94122      |
+| Water Rescue                     | 94123      |
+| Water Rescue                     | 94124      |
+| Water Rescue                     | 94129      |
+| Water Rescue                     | 94130      |
+| Water Rescue                     | 94131      |
+| Water Rescue                     | 94132      |
+| Water Rescue                     | 94133      |
+| Water Rescue                     | 94134      |
+| Water Rescue                     | 94158      |
++----------------------------------+------------+
+277 rows selected (591.142 seconds)
 
 
 6. What San Francisco neighborhoods are in the zip codes 94102 and 94103?
+
+
+
 7. What was the sum of all calls, average, min, and max of the call response times?
+
+
+
 8. How many distinct years of data are in the CSV ﬁle?
+
+
+
+
 9. What week of the year in 2018 had the most ﬁre calls?
+
+
+
+
 10. What neighborhoods in San Francisco had the worst response time in 2018?
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+select zipcode, call_type, count(call_type) from fire_data group by zipcode,call_type order by count(call_type) desc limit 50;
 
 
