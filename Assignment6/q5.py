@@ -13,7 +13,7 @@ rating = spark.read.option('header','true')\
 
 
 rating_join = rating.alias("r1").join(rating.alias("r2"),on="userId",how='inner')\
-    .select(col("r1.userId").alias("userId"),col("r1.movieId").alias("Movie1"),col("r1.rating").alias("Rating1"), col("r2.movieId").alias("Movie2"),col("r2.rating").alias("Rating2"))\
+    .select(col("r1.userId").alias("userId"),col("r1.movieId").alias("Movie1"),col("r1.rating").alias("Rating1"), col("r2.movieId").alias("Movie2"),col("r2.rating").alias("Rating2")	)\
     .filter("Movie1 < Movie2")
 
 corr_table = rating_join.groupBy("Movie1","Movie2").agg(round(corr("Rating1","Rating2"),2).alias("Correlation"))
